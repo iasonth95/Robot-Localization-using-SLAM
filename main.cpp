@@ -146,10 +146,10 @@ int main() {
 
         
         // Calculate estimated pose covariance per equation 5 (P_t+1|t)
-        std::vector<std::vector<double>> poseCovBar = matrixAdd(
-            matrixMultiply(matrixMultiply(G_t, poseCov), transpose(G_t)),
-            matrixMultiply(matrixMultiply(V_t, M_t), transpose(V_t))
-        );
+        //std::vector<std::vector<double>> poseCovBar = matrixAdd(
+        //    matrixMultiply(matrixMultiply(G_t, poseCov), transpose(G_t)),
+        //    matrixMultiply(matrixMultiply(V_t, M_t), transpose(V_t))
+        //);
 
         // Store estimation
         //robotEstimation.poseMeans.push_back({poseMeanBar[0], poseMeanBar[1], poseMeanBar[2]});
