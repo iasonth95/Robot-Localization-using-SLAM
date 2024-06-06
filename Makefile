@@ -1,8 +1,7 @@
 
 # Compiler and compiler flags
 CXX = g++
-CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic
-CXXFLAGS = -I /usr/include/eigen3 -std=c++11
+CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -I /usr/include/eigen3
 # Source files and object files
 SRCS = main.cpp DataLoader.cpp Dataset.cpp #Observation.cpp EKFAlgorithm.cpp Visualization.cpp
 OBJS = $(SRCS:.cpp=.o)
@@ -10,7 +9,7 @@ BUILD_DIR = build
 BUILD_OBJS = $(addprefix $(BUILD_DIR)/, $(OBJS))
 
 # Target executable
-TARGET = $(BUILD_DIR)/myprogram
+TARGET = $(BUILD_DIR)/slam_ekf_algorithm
 
 # Phony targets
 .PHONY: all clean
