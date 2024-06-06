@@ -30,15 +30,15 @@ struct Landmark_Groundtruth {
 #include <vector> // Include any necessary headers for vector
 
 struct Robot {
-    std::vector<double> time;
-    std::vector<double> x;
-    std::vector<double> y;
-    std::vector<double> theta;
-    std::vector<double> v;
-    std::vector<double> w;
-    std::vector<double> barcode_num;
-    std::vector<double> r;
-    std::vector<double> b;
+    std::vector<double> time; // time
+    std::vector<double> x; // position
+    std::vector<double> y; // position
+    std::vector<double> theta; // orientation
+    std::vector<double> v; // linear velocity
+    std::vector<double> w; // angular velocity
+    std::vector<double> barcode_num; // barcode on each robot and landmark
+    std::vector<double> r; // range 
+    std::vector<double> b; // bearing (angle)
 
     std::vector<double> sampled_time;
     std::vector<double> sampled_x;

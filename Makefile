@@ -2,7 +2,7 @@
 # Compiler and compiler flags
 CXX = g++
 CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic
-
+CXXFLAGS = -I /usr/include/eigen3 -std=c++11
 # Source files and object files
 SRCS = main.cpp DataLoader.cpp Dataset.cpp #Observation.cpp EKFAlgorithm.cpp Visualization.cpp
 OBJS = $(SRCS:.cpp=.o)

@@ -5,33 +5,23 @@
 #include <unordered_map>
 #include <cmath>
 #include <armadillo>
+#include <Eigen/Dense>
+
+using namespace Eigen;
 
 // Define a struct for pose mean and covariance
 struct Pose {
-    double x;
-    double y;
-    double theta;
+    double x, y, theta;
 };
 
-// Define a struct for robot estimation
-struct RobotEstimation {
+class RobotEstimation {
+public:
     std::vector<Pose> poseMeans;
-    std::vector<std::vector<double>> poseCovs;
+    std::vector<Matrix3d> poseCovs;
 };
 
-// Function to perform matrix addition
-std::vector<std::vector<double>> matrixAdd(const std::vector<std::vector<double>>& A, const std::vector<std::vector<double>>& B) {
-    // Implement matrix addition here
-}
-
-// Function to perform matrix multiplication
-std::vector<std::vector<double>> matrixMultiply(const std::vector<std::vector<double>>& A, const std::vector<std::vector<double>>& B) {
-    // Implement matrix multiplication here
-}
-
-// Function to compute the transpose of a matrix
-std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>>& A) {
-    // Implement matrix transpose here
+double degrees_to_radians(double degrees) {
+    return degrees * M_PI / 180.0; // Convert degrees to radians using the formula
 }
 
 int main() {
@@ -45,11 +35,10 @@ int main() {
     double sigma_id = 1.0;
 
     // Q_t matrix
-    std::vector<std::vector<double>> Q_t = {
-        {sigma_range * sigma_range, 0.0, 0.0},
-        {0.0, sigma_bearing * sigma_bearing, 0.0},
-        {0.0, 0.0, sigma_id * sigma_id}
-    };
+    Matrix3d Q_t;
+    Q_t << sigma_range * sigma_range, 0.0, 0.0,
+           0.0, sigma_bearing * sigma_bearing, 0.0,
+           0.0, 0.0, sigma_id * sigma_id;
 
     double measurement_prob = 0.0;
     int robot_num = 1;
@@ -68,6 +57,7 @@ int main() {
 
     // Localization task
     robot_num = robot_num - 1; // Specify the robot number
+    std::cout << "Localization task for robot " << Robots[robot_num].sampled_v[0] << std::endl;
     RobotEstimation robotEstimation;
 
     // Initialize Estimation
@@ -76,9 +66,11 @@ int main() {
     Pose poseMean = {Robots[robot_num].sampled_x[start], 
                      Robots[robot_num].sampled_y[start], 
                      Robots[robot_num].sampled_theta[start]};
-    std::vector<std::vector<double>> poseCov = {{0.01, 0.01, 0.01},
-                                                 {0.01, 0.01, 0.01},
-                                                 {0.01, 0.01, 0.01}};
+
+    Matrix3d poseCov;
+    poseCov << 0.01, 0.01, 0.01,
+               0.01, 0.01, 0.01,
+               0.01, 0.01, 0.01;
 
     // Track which measurement is next received
     int measurementIndex = 0;
@@ -90,6 +82,7 @@ int main() {
     }
 
     // Check if time of measurement index is smaller than t = 600
+    //while (measurementIndex < Robots[robot_num].time.size() && Robots[robot_num].time[measurementIndex] < t - 0.05) {
     while (Robots[robot_num].time[measurementIndex] < t - 0.05) {
         // Update index
         ++measurementIndex;
@@ -98,64 +91,63 @@ int main() {
     // Updating the robot's pose estimate with each step
     // Reference table 7.2 in Probabilistic Robotics
     // Starts from 600 for some reason (the first 599 have a problem?)
-    for (int i = start; i < Robots[robot_num].time.size(); ++i) {
+    for (int i = start; i < Robots[robot_num].sampled_time.size(); ++i) {
         double theta = poseMean.theta; // Theta
+        //double theta_rads = degrees_to_radians(theta);
         // Update time
-        double t = Robots[robot_num].time[i];
+        double t = Robots[robot_num].sampled_time[i];
         // Update movement vector per equation 1
-        std::vector<double> u_t = {Robots[robot_num].v[i], Robots[robot_num].w[i]}; // [v_t ; omega_t]
+        std::vector<double> u_t = {Robots[robot_num].sampled_v[i], Robots[robot_num].sampled_w[i]}; // [v_t ; omega_t]
         double rot = deltaT * u_t[1]; // rot = delta_theta = deltaT * omega_t
-        double halfRot = rot / 2.0; // Just half the rotational
+        double halfRot = rot / 2.0;;
+        /*if (rot == 0) {
+            double halfRot = 0;
+        }
+        else{
+            double halfRot = rot / 2.0;
+        } // Just half the rotational}
+        */
         double trans = u_t[0] * deltaT; // Translational: v_t * deltaT 
         // DeltaT here is defined as deltaS_r = deltaS_l
 
-        // Calculate the movement Jacobian per equation 2 (matrix A_t)
-        // Trans instead of only v_t
-        std::vector<std::vector<double>> G_t = {
-            {1.0, 0.0, trans * -sin(theta + halfRot)},
-            {0.0, 1.0, trans * cos(theta + halfRot)},
-            {0.0, 0.0, 1.0}
-        };
+    Matrix3d G_t;
+    Matrix2d M_t;
+    MatrixXd V_t(3, 2);  // Define V_t as 3x2 matrix
+    Vector3d poseUpdate;
 
-        // Calculate motion covariance in control space per equation 3 (P_t or Sigma_s)
-        std::vector<std::vector<double>> M_t = {
-            {pow(alphas[0] * fabs(u_t[0]) + alphas[1] * fabs(u_t[1]), 2), 0.0},
-            {0.0, pow(alphas[2] * fabs(u_t[0]) + alphas[3] * fabs(u_t[1]), 2)}
-        };
+        // Calculate the movement Jacobian per equation 2
+    G_t << 1, 0, trans * -sin(theta + halfRot),
+           0, 1, trans * cos(theta + halfRot),
+           0, 0, 1;
 
-        // Calculate Jacobian to transform motion covariance to state space per equation 4 (This is equation G_t but for 2D)
-        std::vector<std::vector<double>> V_t = {
-            {cos(theta + halfRot), -0.5 * sin(theta + halfRot)},
-            {sin(theta + halfRot), 0.5 * cos(theta + halfRot)},
-            {0.0, 1.0}
-        };
+    // Calculate motion covariance in control space per equation 3
+    M_t << std::pow(alphas[0] * std::abs(u_t[0]) + alphas[1] * std::abs(u_t[1]), 2), 0,
+       0, std::pow(alphas[2] * std::abs(u_t[0]) + alphas[3] * std::abs(u_t[1]), 2);
 
-        // Calculate pose update 
-        // In order to obtain x_t+1, y_t+1, theta_t+1 (Page 15 MIT slam slides)
-        std::vector<double> poseUpdate = {
-            trans * cos(theta + halfRot),
-            trans * sin(theta + halfRot),
-            rot
-        };
+    // Calculate Jacobian to transform motion covariance to state space per equation 4
+    V_t << cos(theta + halfRot), -0.5 * sin(theta + halfRot),
+           sin(theta + halfRot), 0.5 * cos(theta + halfRot),
+           0, 1;
 
-        // Calculate estimated pose mean per equation 1
-        std::vector<double> poseMeanBar = {poseMean.x, poseMean.y, poseMean.theta};
-        for (int j = 0; j < 3; ++j) {
-            poseMeanBar[j] += poseUpdate[j];
-        }
 
-        
-        // Calculate estimated pose covariance per equation 5 (P_t+1|t)
-        //std::vector<std::vector<double>> poseCovBar = matrixAdd(
-        //    matrixMultiply(matrixMultiply(G_t, poseCov), transpose(G_t)),
-        //    matrixMultiply(matrixMultiply(V_t, M_t), transpose(V_t))
-        //);
+    // Calculate pose update
+    poseUpdate << trans * cos(theta + halfRot),
+                  trans * sin(theta + halfRot),
+                  u_t[1];  // Assuming u_t(1) is the rotation component (rot)
 
-        // Store estimation
-        //robotEstimation.poseMeans.push_back({poseMeanBar[0], poseMeanBar[1], poseMeanBar[2]});
-        //robotEstimation.poseCovs.push_back(poseCovBar);
+    // Calculate estimated pose mean per equation 1
+    Vector3d poseMeanBar = {poseMean.x + poseUpdate[0],
+                            poseMean.y + poseUpdate[1],
+                            poseMean.theta + poseUpdate[2]};
+
+    // Calculate estimated pose covariance per equation 5
+    Matrix3d poseCovBar = G_t * poseCov * G_t.transpose() + V_t * M_t * V_t.transpose();
+
+    // Store estimation
+    robotEstimation.poseMeans.push_back({poseMeanBar[0], poseMeanBar[1], poseMeanBar[2]});
+    poseCov = poseCovBar;
+    //std::cout<<"Pose Covariance: "<<poseCovBar<<std::endl;
 }
     
-
         return 0;
     }
