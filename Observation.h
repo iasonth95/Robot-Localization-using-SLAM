@@ -1,12 +1,15 @@
 #ifndef OBSERVATION_H
 #define OBSERVATION_H
-#include <vector> // Include the necessary data types
+
+#include "DataLoader.h"
+#include <vector>
+#include <unordered_map>
+#include <Eigen/Dense>
 
 class Observation {
 public:
     Observation(); // Constructor
-    void get(std::vector<Robot>& Robots, int robot_num, double t, int& index, std::map<int, std::string>& codeDict); // Pass parameters
-    // Define any other member functions and data structures needed
+    std::tuple<Eigen::MatrixXd, int> get(std::vector<Robot>& Robots, int robot_num, double t, int& index, std::unordered_map<double, double>& codeDict);
 };
 
-#endif
+#endif // OBSERVATION_H

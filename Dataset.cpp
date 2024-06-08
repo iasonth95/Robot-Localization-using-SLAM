@@ -9,8 +9,15 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot>& Robots, 
 
     std::cout << "Sampling dataset for " << Robots.size() << " robots with sample time " << sample_time << "..." << std::endl;
     int timesteps = 0;
+    
     // Loop through each robot in the dataset
     for (auto& robot : Robots) {
+
+        // Check if the robot's time vector is empty
+        if (robot.time.empty()) {
+            std::cerr << "Error: Robot's time vector is empty." << std::endl;
+            continue;
+        }
         // Calculate min and max times
         double min_time = robot.time.front();
         double max_time = robot.time.back();
@@ -98,7 +105,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot>& Robots, 
         robot.sampled_b = sampled_b;
     }
 
-    std::cout << "Dataset sampling completed." << std::endl;
+    std::cout << "Dataset sampling completed." << &Robots[0].sampled_b << timesteps << std::endl;
 
     return std::make_tuple(Robots, timesteps);
         }

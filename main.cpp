@@ -1,5 +1,7 @@
 #include "DataLoader.h"
 #include "Dataset.h"
+#include "Observation.h"
+#include "ConBear.h"
 #include <iostream>
 #include <vector>
 #include <unordered_map>
@@ -147,7 +149,89 @@ int main() {
     robotEstimation.poseMeans.push_back({poseMeanBar[0], poseMeanBar[1], poseMeanBar[2]});
     poseCov = poseCovBar;
     //std::cout<<"Pose Covariance: "<<poseCovBar<<std::endl;
+    
+    Observation get_observations;
+
+    Eigen::MatrixXd z;  // Initialize as an empty matrix
+    // Get measurements for the current timestep, if any 
+
+    // Get measurements for the current timestep, if any 
+    std::tie(z, measurementIndex) = get_observations.get(Robots, robot_num, t, measurementIndex, codeDict);
+
+    
+    // Create matrices for expected measurement and measurement covariance
+    Eigen::MatrixXd S;
+    Eigen::MatrixXd zHat;
+
+    // If z is not empty, update the size of S and zHat accordingly
+    if (z.cols() > 0) {
+        S.resize(z.cols(), 3);
+        zHat.resize(3, z.cols());
+    } else {
+        // If z is empty, initialize S and zHat with appropriate dimensions
+        // For example, you can initialize them with zeros
+        S.resize(3, 3);
+        S.setZero();
+        zHat.resize(3, 1);  // Initialize with 1 column
+        zHat.setZero();
+    }
+
+    // If any measurements are available
+    if (z.cols() > 0 && z(2, 0) > 1) {
+        // Loop over every measurement
+        for (int k = 0; k < z.cols(); ++k) {
+            int j = z(2, k);
+
+            // Get coordinates of the measured landmark
+            Vector2d m(Landmarks[j].x, Landmarks[j].y);
+
+            // Compute the expected measurement per equations 6 and 7
+            double xDist = m(0) - poseMeanBar(0); // m_j,x − µ^{hat}_t,x
+            double yDist = m(1) - poseMeanBar(1);
+            double q = xDist * xDist + yDist * yDist;
+
+            ConBear bearing;
+            // Constrain expected bearing to between 0 and 2*pi
+            double pred_bear = bearing.conBear(atan2(yDist, xDist) - poseMeanBar(2));
+
+            // z_{hat}_t+1|t
+            zHat.col(k) << sqrt(q), pred_bear, j;
+
+            // Calculate Jacobian of the measurement model per equation 8
+            MatrixXd H(3, 3);
+            H << (-1 * (xDist / sqrt(q))), (-1 * (yDist / sqrt(q))), 0,
+                 (yDist / q), (-1 * (xDist / q)), -1,
+                 0, 0, 0;
+
+            //////////////////////////////////////////////////////////
+            // Access element of the MatrixXd matrices
+            double value = H(0, 1);
+            std::cout << "Matrix:\n" << H << std::endl;
+            std::cout << "Matrix:\n" << poseCovBar << std::endl;
+            std::cout << "Matrix:\n" << H.transpose() << std::endl;
+            std::cout << "Matrix:\n" << Q_t << std::endl;
+            std::cout << "Matrix:\n" << S << std::endl;
+            std::cout << "Matrix:\n" << z << std::endl;
+            // Compute the expression H * poseCovBar * H.transpose() + Q_t
+            Eigen::MatrixXd expression = H * poseCovBar * H.transpose() + Q_t;
+            // Ensure the expression has the correct size
+            assert(expression.rows() == 3 && expression.cols() == 3);
+            
+            // Compute S per equation 9 (just the parenthesis of Kalman gain)
+            S.row(k) = H * poseCovBar * H.transpose() + Q_t;
+
+            // Compute Kalman gain per equation 10
+            MatrixXd K = poseCov * H.transpose() * S.row(k).inverse();
+
+            // Update pose mean and covariance estimates
+            // per equations 11 and 12 (z_t+1 = z_t|t-1)
+            poseMeanBar += K * (z.col(k) - zHat.col(k));
+            poseCovBar = (Matrix3d::Identity() - (K * H)) * poseCovBar;
+    }
+    }
+    }
+    std::cout << "Finised for now the main\n " << std::endl;
+        return 0;
+    
 }
     
-        return 0;
-    }
