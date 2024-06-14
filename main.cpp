@@ -8,14 +8,11 @@
 #include <cmath>
 #include <armadillo>
 #include <Eigen/Dense>
+#include "Visualization.h" // Include Visualization class header
 
 using namespace Eigen;
 
 // Define a struct for pose mean and covariance
-struct Pose
-{
-    double x, y, theta;
-};
 
 class RobotEstimation
 {
@@ -272,7 +269,52 @@ int main()
 
         // Print the error for debugging/testing purposes
         std::cout << "Error between ground truth and poseMean: " << error.transpose() << std::endl;
+
+        // Visualization: Assuming you have a Visualization class instance initialized earlier
+        // Draw the estimated pose (poseMeanBar) and ground truth for visualization
+        
     }
-    std::cout << "Finised for now the main\n " << std::endl;
+
+    // Initialize SFML visualization
+    Visualization vis;
+
+    // Create vectors to store the ground truth values for each timestep
+    std::vector<double> groundTruthX;
+    std::vector<double> groundTruthY;
+    std::vector<double> groundTruthTheta;
+
+    // Populate the ground truth vectors with the robot's sampled values
+    for (int i = start; i < Robots[0].sampled_x.size(); ++i) {
+        groundTruthX.push_back(Robots[0].sampled_x[i]);
+        groundTruthY.push_back(Robots[0].sampled_y[i]);
+        groundTruthTheta.push_back(Robots[0].sampled_theta[i]);
+    }
+
+    // Main loop to simulate continuous updating of the visualization
+    for (int i = 0; i < robotEstimation.poseMeans.size(); ++i) {
+        // Retrieve poseMean for current timestep
+        std::vector<Pose> poseMeans = robotEstimation.poseMeans;
+
+        // Draw pose and groundtruth in the visualization
+        vis.drawPoseAndGroundtruth(poseMeans, groundTruthX, groundTruthY, groundTruthTheta, i);
+
+        // Display the updated visualization
+        vis.display();
+
+        // Handle events to keep the window open until manually closed
+        vis.handleEvents();
+
+        // Optional delay to control frame rate
+        sf::sleep(sf::milliseconds(50));  // Adjust as needed
+    }
+
+    // Keep the window open until it is manually closed
+    while (vis.isOpen()) {
+        vis.handleEvents();
+    }
+
+    std::cout << "Finished visualization." << std::endl;
+
     return 0;
+
 }

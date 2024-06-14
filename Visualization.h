@@ -1,12 +1,32 @@
 #ifndef VISUALIZATION_H
 #define VISUALIZATION_H
-#include <vector> // Include the necessary data types
+
+#include <SFML/Graphics.hpp>
+#include <vector>
+// Define a struct for pose
+struct Pose {
+    double x, y, theta;
+};
 
 class Visualization {
 public:
-    Visualization(); // Constructor
-    void visualize(std::vector<Robot>& Robots, std::vector<Landmark>& Landmark_Groundtruth, double timesteps, double sample_time);
-    // Define any other member functions and data structures needed
+    Visualization();
+
+    void drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
+                                const std::vector<double>& sampled_x,
+                                const std::vector<double>& sampled_y,
+                                const std::vector<double>& sampled_theta,
+                                int currentStep);
+    
+    void display();
+    
+    bool isOpen() const;
+    
+    void handleEvents();
+
+private:
+    sf::RenderWindow window_;
+    sf::View view_;
 };
 
-#endif
+#endif // VISUALIZATION_H
