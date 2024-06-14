@@ -142,7 +142,7 @@ int main() {
                             poseMean.y + poseUpdate[1],
                             poseMean.theta + poseUpdate[2]};
 
-    // Calculate estimated pose covariance per equation 5
+    // Calculate estimated pose covariance per equation 5 (Σ^t)
     Matrix3d poseCovBar = G_t * poseCov * G_t.transpose() + V_t * M_t * V_t.transpose();
 
     // Store estimation
@@ -215,18 +215,21 @@ int main() {
             // Compute the expression H * poseCovBar * H.transpose() + Q_t
             Eigen::MatrixXd expression = H * poseCovBar * H.transpose() + Q_t;
             // Ensure the expression has the correct size
-            assert(expression.rows() == 3 && expression.cols() == 3);
+            std::cout << "expression:\n" << expression << std::endl;
+            //assert(expression.rows() == 3 && expression.cols() == 3);
             
             // Compute S per equation 9 (just the parenthesis of Kalman gain)
-            S.row(k) = H * poseCovBar * H.transpose() + Q_t;
+            S = H * poseCovBar * H.transpose() + Q_t;
 
             // Compute Kalman gain per equation 10
-            MatrixXd K = poseCov * H.transpose() * S.row(k).inverse();
+            MatrixXd K = poseCovBar * H.transpose() * S.inverse();
 
             // Update pose mean and covariance estimates
             // per equations 11 and 12 (z_t+1 = z_t|t-1)
             poseMeanBar += K * (z.col(k) - zHat.col(k));
             poseCovBar = (Matrix3d::Identity() - (K * H)) * poseCovBar;
+            std::cout << "poseMeanBar\n " << poseMeanBar << std::endl;
+            std::cout << "poseCovBar\n " << poseCovBar << std::endl;
     }
     }
     }
