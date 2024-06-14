@@ -1,13 +1,17 @@
 #include "Visualization.h"
 
+// Constructor: Initialize SFML window with a size and title
 Visualization::Visualization() : window_(sf::VideoMode(800, 600), "Robot Localization Visualization") {
-    // Constructor initializes SFML window with size 800x600 and title "Robot Localization Visualization"
-    // Set up a view to better visualize the entire scene
-    view_.setCenter(400, 300); // Center the view at (400, 300)
-    view_.setSize(800, 600);   // Set the view size to match the window size
-    window_.setView(view_);
+    // Set the initial view
+    sf::View view(sf::FloatRect(-500.f, -500.f, 1000.f, 1000.f)); // Adjust the view size and position
+    window_.setView(view);
+
+    // Set scaling factors (adjust according to your actual units and window size)
+    scaleFactorX_ = 50.f; // 1 meter in real world = 50 pixels in SFML (adjust as needed)
+    scaleFactorY_ = 50.f; // 1 meter in real world = 50 pixels in SFML (adjust as needed)
 }
 
+// Draw robot's pose means and ground truth
 void Visualization::drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
                                            const std::vector<double>& sampled_x,
                                            const std::vector<double>& sampled_y,
@@ -16,35 +20,35 @@ void Visualization::drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
     // Clear the window
     window_.clear(sf::Color::White);
 
-    // Draw all ground truth positions up to the current step
-    for (int i = 0; i <= currentStep && i < sampled_x.size(); ++i) {
-        sf::CircleShape groundtruthCircle(2.f);
+    // Draw ground truth (sampled positions)
+    if (currentStep < sampled_x.size()) {
+        sf::CircleShape groundtruthCircle(20.f); // Increase circle size
         groundtruthCircle.setFillColor(sf::Color::Green);
-        groundtruthCircle.setPosition(sampled_x[i], sampled_y[i]);
+        groundtruthCircle.setPosition(scaleFactorX_ * sampled_x[currentStep], -scaleFactorY_ * sampled_y[currentStep]);
         window_.draw(groundtruthCircle);
     }
 
-    // Draw all pose means up to the current step
-    for (int i = 0; i <= currentStep && i < poseMeans.size(); ++i) {
-        sf::CircleShape poseCircle(2.f);
+    // Draw poseMeans
+    if (currentStep < poseMeans.size()) {
+        sf::CircleShape poseCircle(20.f); // Increase circle size
         poseCircle.setFillColor(sf::Color::Blue);
-        poseCircle.setPosition(poseMeans[i].x, poseMeans[i].y);
+        poseCircle.setPosition(scaleFactorX_ * poseMeans[currentStep].x, -scaleFactorY_ * poseMeans[currentStep].y);
         window_.draw(poseCircle);
     }
 }
 
+// Display the window
 void Visualization::display() {
-    // Display the updated window
     window_.display();
 }
 
+// Check if the window is open
 bool Visualization::isOpen() const {
-    // Check if the window is open
     return window_.isOpen();
 }
 
+// Handle SFML events
 void Visualization::handleEvents() {
-    // Handle events (e.g., window close events)
     sf::Event event;
     while (window_.pollEvent(event)) {
         if (event.type == sf::Event::Closed) {
@@ -52,3 +56,4 @@ void Visualization::handleEvents() {
         }
     }
 }
+

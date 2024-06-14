@@ -305,7 +305,7 @@ int main()
         vis.handleEvents();
 
         // Optional delay to control frame rate
-        sf::sleep(sf::milliseconds(50));  // Adjust as needed
+        //sf::sleep(sf::milliseconds(50));  // Adjust as needed
     }
 
     // Keep the window open until it is manually closed
