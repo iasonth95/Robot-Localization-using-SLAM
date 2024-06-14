@@ -316,5 +316,5 @@ int main()
     std::cout << "Finished visualization." << std::endl;
 
     return 0;
-
 }
+
