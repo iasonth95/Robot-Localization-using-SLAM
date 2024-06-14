@@ -2,7 +2,8 @@
 #ifndef BARCODE_H
 #define BARCODE_H
 
-struct Barcode {
+struct Barcode
+{
     int subject_num;
     int barcode_num;
 };
@@ -13,7 +14,8 @@ struct Barcode {
 #ifndef LANDMARK_GROUNDTRUTH_H
 #define LANDMARK_GROUNDTRUTH_H
 
-struct Landmark_Groundtruth {
+struct Landmark_Groundtruth
+{
     int subject_num;
     double x;
     double y;
@@ -29,16 +31,17 @@ struct Landmark_Groundtruth {
 
 #include <vector> // Include any necessary headers for vector
 
-struct Robot {
-    std::vector<double> time; // time
-    std::vector<double> x; // position
-    std::vector<double> y; // position
-    std::vector<double> theta; // orientation
-    std::vector<double> v; // linear velocity
-    std::vector<double> w; // angular velocity
+struct Robot
+{
+    std::vector<double> time;        // time
+    std::vector<double> x;           // position
+    std::vector<double> y;           // position
+    std::vector<double> theta;       // orientation
+    std::vector<double> v;           // linear velocity
+    std::vector<double> w;           // angular velocity
     std::vector<double> barcode_num; // barcode on each robot and landmark
-    std::vector<double> r; // range 
-    std::vector<double> b; // bearing (angle)
+    std::vector<double> r;           // range
+    std::vector<double> b;           // bearing (angle)
 
     std::vector<double> sampled_time;
     std::vector<double> sampled_x;
@@ -60,16 +63,18 @@ struct Robot {
 #include <tuple>
 // Include any other necessary headers
 
-class DataLoader {
+class DataLoader
+{
 public:
     DataLoader(int n_robots);
-    std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<Robot>> loadData(std::vector<Barcode> &Barcodes, 
-    std::vector<Landmark_Groundtruth> &Landmarks, 
-    std::vector<Robot> &Robots);    // Add any other necessary member functions or data members
-    
-    void printData(const std::vector<Barcode>& Barcodes, 
-                   const std::vector<Landmark_Groundtruth>& Landmarks, 
-                   const std::vector<Robot>& Robots);
+    std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<Robot>> loadData(std::vector<Barcode> &Barcodes,
+                                                                                                     std::vector<Landmark_Groundtruth> &Landmarks,
+                                                                                                     std::vector<Robot> &Robots); // Add any other necessary member functions or data members
+
+    void printData(const std::vector<Barcode> &Barcodes,
+                   const std::vector<Landmark_Groundtruth> &Landmarks,
+                   const std::vector<Robot> &Robots);
+
 private:
     int n_robots_;
 };

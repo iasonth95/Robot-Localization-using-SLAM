@@ -6,10 +6,11 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 
-class Observation {
+class Observation
+{
 public:
     Observation(); // Constructor
-    std::tuple<Eigen::MatrixXd, int> get(std::vector<Robot>& Robots, int robot_num, double t, int& index, std::unordered_map<double, double>& codeDict);
+    std::tuple<Eigen::MatrixXd, int> get(std::vector<Robot> &Robots, int robot_num, double t, int &index, std::unordered_map<double, double> &codeDict);
 };
 
 #endif // OBSERVATION_H
