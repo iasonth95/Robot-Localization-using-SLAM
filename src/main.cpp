@@ -33,9 +33,9 @@ int main()
     std::vector<double> alphas = {0.2, 0.03, 0.09, 0.08, 0.0, 0.0}; // Motion model noise parameters
 
     // Measurement model noise parameters
-    double sigma_range = 0.43;
-    double sigma_bearing = 0.6;
-    double sigma_id = 1.0;
+    constexpr double sigma_range = 0.43;
+    constexpr double sigma_bearing = 0.6;
+    constexpr double sigma_id = 1.0;
 
     // Q_t matrix
     Matrix3d Q_t;
@@ -43,11 +43,11 @@ int main()
         0.0, sigma_bearing * sigma_bearing, 0.0,
         0.0, 0.0, sigma_id * sigma_id;
 
-    double measurement_prob = 0.0;
+    /*double measurement_prob = 0.0;*/
     int robot_num = 1;
-    int n_landmarks = 15;
-    int n_robots = 1;          // Set the number of robots
-    double sample_time = 0.02; // Set the sampling time
+    /*int n_landmarks = 15;*/
+    constexpr int n_robots = 1;          // Set the number of robots
+    constexpr double sample_time = 0.02; // Set the sampling time
     std::vector<Barcode> Barcodes;
     std::vector<Landmark_Groundtruth> Landmarks;
     std::vector<Robot> Robots;
@@ -210,7 +210,7 @@ int main()
 
                 //////////////////////////////////////////////////////////
                 // Access element of the MatrixXd matrices
-                double value = H(0, 1);
+                H(0, 1);
                 std::cout << "Matrix:\n"
                           << H << std::endl;
                 std::cout << "Matrix:\n"
