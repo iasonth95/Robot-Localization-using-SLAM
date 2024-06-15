@@ -1,11 +1,19 @@
-cmake_minimum_required(VERSION 3.0.0)
-project(CPP VERSION 0.1.0 LANGUAGES C CXX)
+cmake_minimum_required(VERSION 3.10)
+project(RL-SLAM)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-include(CTest)
-enable_testing()
+# Find Eigen3
+find_package(Eigen3 3.3 REQUIRED)
 
-add_executable(CPP main.cpp)
+# Find Armadillo
+find_package(Armadillo REQUIRED)
+find_package(SFML 2.5 COMPONENTS graphics window system REQUIRED)
+file(GLOB_RECURSE SRC_FILES src/*.cpp)
+# Include directories for Eigen3 and Armadillo
+include_directories(${EIGEN3_INCLUDE_DIR} ${ARMADILLO_INCLUDE_DIRS} ${SFML_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include)
+# Add your executable
+add_executable(RL-SLAM ${SRC_FILES})
 
-set(CPACK_PROJECT_NAME ${PROJECT_NAME})
-set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})
-include(CPack)
+# Link Armadillo (Eigen is header-only, so no linking required)
+target_link_libraries(RL-SLAM ${ARMADILLO_LIBRARIES} sfml-graphics sfml-window sfml-system)
