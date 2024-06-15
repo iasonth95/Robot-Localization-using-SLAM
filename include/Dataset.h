@@ -1,6 +1,3 @@
-#ifndef DATASET_H
-#define DATASET_H
-
 #include <vector> // Include the necessary data types
 #include <iostream>
 #include "DataLoader.h"
@@ -16,9 +13,3 @@ public:
 private:
     // Add any private member variables or helper functions here
 };
-
-#endif
-
-
-
-

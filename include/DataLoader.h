@@ -1,6 +1,8 @@
+#pragma once
 // Barcode.h
-#ifndef BARCODE_H
-#define BARCODE_H
+#include <vector>
+#include <tuple>
+
 
 struct Barcode
 {
@@ -8,11 +10,8 @@ struct Barcode
     int barcode_num;
 };
 
-#endif
 
 // Landmark_Groundtruth.h
-#ifndef LANDMARK_GROUNDTRUTH_H
-#define LANDMARK_GROUNDTRUTH_H
 
 struct Landmark_Groundtruth
 {
@@ -23,13 +22,8 @@ struct Landmark_Groundtruth
     double y_sd;
 };
 
-#endif
 
 // Robot.h
-#ifndef ROBOT_H
-#define ROBOT_H
-
-#include <vector> // Include any necessary headers for vector
 
 struct Robot
 {
@@ -54,14 +48,7 @@ struct Robot
     std::vector<double> sampled_b;
 };
 
-#endif
 
-#ifndef DATALOADER_H
-#define DATALOADER_H
-
-#include <vector>
-#include <tuple>
-// Include any other necessary headers
 
 class DataLoader
 {
@@ -79,4 +66,3 @@ private:
     int n_robots_;
 };
 
-#endif

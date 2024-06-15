@@ -1,6 +1,4 @@
-#ifndef VISUALIZATION_H
-#define VISUALIZATION_H
-
+#pragma once
 #include <SFML/Graphics.hpp>
 #include <vector>
 // Define a struct for pose
@@ -34,6 +32,3 @@ private:
     float scaleFactorX_;
     float scaleFactorY_;
 };
-
-
-#endif // VISUALIZATION_H

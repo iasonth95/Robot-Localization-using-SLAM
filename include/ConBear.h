@@ -1,6 +1,4 @@
-#ifndef CONBEAR_H
-#define CONBEAR_H
-
+#pragma once
 class ConBear
 {
 public:
@@ -8,4 +6,3 @@ public:
     static double conBear(double oldBear);
 };
 
-#endif // CONBEAR_H
