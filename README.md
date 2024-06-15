@@ -13,3 +13,4 @@ e.g. [vscode](https://marketplace.visualstudio.com/items?itemName=llvm-vs-code-e
 For some style advices run 
 `clang-tidy src/* --checks="-*,modernize-*"`
 And follow whatever you agree with, I'll leave them there so you can see them
+Also I added some pedantic flags and I left the warnings for you to remove

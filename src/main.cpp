@@ -29,7 +29,7 @@ double degrees_to_radians(double degrees)
 int main()
 {
 
-    double deltaT = 0.02;                                           // Sample step
+    constexpr double deltaT = 0.02;                                           // Sample step
     std::vector<double> alphas = {0.2, 0.03, 0.09, 0.08, 0.0, 0.0}; // Motion model noise parameters
 
     // Measurement model noise parameters
