@@ -20,20 +20,17 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
         std::string line;
         while (std::getline(barcodeFile, line))
         {
-            // Skip lines starting with "#" or empty lines
             if (line.empty() || line[0] == '#' || line.find("UTIAS") != std::string::npos || line.find("produced by") != std::string::npos)
             {
                 continue;
             }
-            std::istringstream iss(line); // Declare iss here
+            std::istringstream iss(line);
             if (iss >> barcode.subject_num >> barcode.barcode_num)
             {
-                // std::cout << barcode.subject_num << " " << barcode.barcode_num << std::endl << "hello" << std::endl;
                 Barcodes.push_back(barcode);
             }
             else
             {
-                // Handle parsing error if needed
                 std::cerr << "Error parsing line: " << line << std::endl;
             }
         }
@@ -52,34 +49,32 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
         std::string line;
         while (std::getline(landmarkFile, line))
         {
-            // Skip lines starting with "#" or empty lines
             if (line.empty() || line[0] == '#' || line.find("UTIAS") != std::string::npos || line.find("produced by") != std::string::npos)
             {
                 continue;
             }
-            std::istringstream iss(line); // Declare iss here
+            std::istringstream iss(line);
             if (iss >> landmark.subject_num >> landmark.x >> landmark.y >> landmark.x_sd >> landmark.y_sd)
             {
-                // std::cout << barcode.subject_num << " " << barcode.barcode_num << std::endl << "hello" << std::endl;
                 Landmarks.push_back(landmark);
             }
             else
             {
-                // Handle parsing error if needed
                 std::cerr << "Error parsing line: " << line << std::endl;
             }
         }
-        barcodeFile.close();
+        landmarkFile.close();
     }
     else
     {
-        std::cerr << "Error opening Barcodes.dat" << std::endl;
+        std::cerr << "Error opening Landmark_Groundtruth.dat" << std::endl;
     }
 
     // Load data for each robot
     for (int i = 1; i <= n_robots_; ++i)
     {
         Robot robot;
+        // Load ground truth data
         std::ifstream robotFile("./dataset_UTIAS/Robot" + std::to_string(i) + "_Groundtruth.dat");
         if (robotFile.is_open())
         {
@@ -97,17 +92,16 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
                 }
                 else
                 {
-                    // Handle parsing error if needed
                     std::cerr << "Error parsing line: " << line << std::endl;
                 }
             }
+            robotFile.close();
         }
         else
         {
             std::cerr << "Error opening Robot" << i << "_Groundtruth.dat" << std::endl;
         }
 
-        robotFile.close();
         // Load odometry data
         std::ifstream odometryFile("./dataset_UTIAS/Robot" + std::to_string(i) + "_Odometry.dat");
         if (odometryFile.is_open())
@@ -124,23 +118,22 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
                 }
                 else
                 {
-                    // Handle parsing error if needed
                     std::cerr << "Error parsing line: " << line << std::endl;
                 }
             }
+            odometryFile.close();
         }
         else
         {
             std::cerr << "Error opening Robot" << i << "_Odometry.dat" << std::endl;
         }
-        odometryFile.close();
 
-        // Construct file name
-        std::ifstream measurmentFile("./dataset_UTIAS/Robot" + std::to_string(i) + "_Measurement.dat");
-        if (measurmentFile.is_open())
+        // Load measurement data
+        std::ifstream measurementFile("./dataset_UTIAS/Robot" + std::to_string(i) + "_Measurement.dat");
+        if (measurementFile.is_open())
         {
             std::string line;
-            while (std::getline(measurmentFile, line))
+            while (std::getline(measurementFile, line))
             {
                 std::istringstream iss(line);
                 double time, barcode_num, r, b;
@@ -152,21 +145,22 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
                 }
                 else
                 {
-                    // Handle parsing error if needed
                     std::cerr << "Error parsing line: " << line << std::endl;
                 }
             }
+            measurementFile.close();
         }
         else
         {
-            std::cerr << "Error opening Robot" << i << "_Odometry.dat" << std::endl;
+            std::cerr << "Error opening Robot" << i << "_Measurement.dat" << std::endl;
         }
-        measurmentFile.close();
+
         Robots.push_back(robot);
     }
 
     return std::make_tuple(Barcodes, Landmarks, Robots);
 }
+
 void DataLoader::printData(const std::vector<Barcode> &Barcodes,
                            const std::vector<Landmark_Groundtruth> &Landmarks,
                            const std::vector<Robot> &Robots)

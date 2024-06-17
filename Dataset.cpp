@@ -5,51 +5,42 @@
 
 Dataset::Dataset() {}
 
-std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, double sample_time)
-{
+void Dataset::normalizeTime(std::vector<Robot>& Robots, double& min_time, double& max_time) {
+    min_time = std::numeric_limits<double>::max();
+    max_time = std::numeric_limits<double>::lowest();
 
-    std::cout << "Sampling dataset for " << Robots.size() << " robots with sample time " << sample_time << "..." << std::endl;
-    int timesteps = 0;
-
-    // Loop through each robot in the dataset
-    for (auto &robot : Robots)
-    {
-
-        // Check if the robot's time vector is empty
-        if (robot.time.empty())
-        {
-            std::cerr << "Error: Robot's time vector is empty." << std::endl;
-            continue;
+    for (auto& robot : Robots) {
+        if (!robot.time.empty()) {
+            min_time = std::min(min_time, robot.time.front());
+            max_time = std::max(max_time, robot.time.back());
         }
-        // Calculate min and max times
-        double min_time = robot.time.front();
-        double max_time = robot.time.back();
     }
-    // Normalize the time values for each robot
-    for (auto &robot : Robots)
-    {
-        double min_time = robot.time.front();
-        for (auto &t : robot.time)
-        {
+
+    for (auto& robot : Robots) {
+        for (auto& t : robot.time) {
             t -= min_time;
         }
     }
 
-    // max_time -= min_time;
-    for (auto &robot : Robots)
-    {
-        double min_time = 0; // After normalization, the minimum time is 0
-        double max_time = robot.time.back();
+    max_time -= min_time;
+}
 
-        timesteps = std::floor(max_time / sample_time) + 1;
+std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot>& Robots, double sample_time) {
+    std::cout << "Sampling dataset for " << Robots.size() << " robots with sample time " << sample_time << "..." << std::endl;
+    int timesteps = 0;
 
-        // Create new vectors to store sampled data
+    double min_time, max_time;
+    normalizeTime(Robots, min_time, max_time);
+
+    timesteps = std::floor(max_time / sample_time) + 1;
+
+    for (auto& robot : Robots) {
         std::vector<double> sampled_time(timesteps);
         std::vector<double> sampled_x(timesteps);
         std::vector<double> sampled_y(timesteps);
         std::vector<double> sampled_theta(timesteps);
-        std::vector<double> sampled_v(timesteps); // Linear velocity
-        std::vector<double> sampled_w(timesteps); // Angular velocity
+        std::vector<double> sampled_v(timesteps);
+        std::vector<double> sampled_w(timesteps);
         std::vector<double> sampled_barcode_num(timesteps);
         std::vector<double> sampled_r(timesteps);
         std::vector<double> sampled_b(timesteps);
@@ -59,17 +50,14 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
         size_t i = 0;
         double p = 0;
 
-        while (t <= max_time)
-        {
+        while (t <= max_time) {
             sampled_time[k] = t;
 
-            while (i < robot.time.size() && robot.time[i] <= t)
-            {
+            while (i < robot.time.size() && robot.time[i] <= t) {
                 ++i;
             }
 
-            if (i == 1 || i == robot.time.size())
-            {
+            if (i == 1 || i == robot.time.size()) {
                 sampled_x[k] = 0;
                 sampled_y[k] = 0;
                 sampled_theta[k] = 0;
@@ -78,21 +66,16 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
                 sampled_barcode_num[k] = 0;
                 sampled_r[k] = 0;
                 sampled_b[k] = 0;
-            }
-            else
-            {
+            } else {
                 p = (t - robot.time[i - 1]) / (robot.time[i] - robot.time[i - 1]);
 
                 sampled_x[k] = (1 - p) * robot.x[i - 1] + p * robot.x[i];
                 sampled_y[k] = (1 - p) * robot.y[i - 1] + p * robot.y[i];
 
                 double d_theta = robot.theta[i] - robot.theta[i - 1];
-                if (d_theta > M_PI)
-                {
+                if (d_theta > M_PI) {
                     d_theta -= 2 * M_PI;
-                }
-                else if (d_theta < -M_PI)
-                {
+                } else if (d_theta < -M_PI) {
                     d_theta += 2 * M_PI;
                 }
                 sampled_theta[k] = (1 - p) * robot.theta[i - 1] + p * (robot.theta[i - 1] + d_theta);
@@ -107,7 +90,6 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
             t += sample_time;
         }
 
-        // Store sampled data in new vectors to preserve original data
         robot.sampled_time = sampled_time;
         robot.sampled_x = sampled_x;
         robot.sampled_y = sampled_y;
@@ -119,7 +101,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
         robot.sampled_b = sampled_b;
     }
 
-    std::cout << "Dataset sampling completed." << &Robots[0].sampled_b << timesteps << std::endl;
+    std::cout << "Dataset sampling completed." << std::endl;
 
     return std::make_tuple(Robots, timesteps);
 }

@@ -1,5 +1,5 @@
 #include "Visualization.h"
-
+#include <cmath>
 // Constructor: Initialize SFML window with a size and title
 Visualization::Visualization() : window_(sf::VideoMode(800, 600), "Robot Localization Visualization") {
     // Set the initial view
@@ -34,6 +34,27 @@ void Visualization::drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
         poseCircle.setFillColor(sf::Color::Blue);
         poseCircle.setPosition(scaleFactorX_ * poseMeans[currentStep].x, -scaleFactorY_ * poseMeans[currentStep].y);
         window_.draw(poseCircle);
+
+        // Draw orientation line (similar to MATLAB script)
+        float lineLength = 50.f; // Adjust line length as needed
+        sf::Vertex line[] = {
+            sf::Vertex(sf::Vector2f(scaleFactorX_ * poseMeans[currentStep].x, -scaleFactorY_ * poseMeans[currentStep].y)),
+            sf::Vertex(sf::Vector2f(scaleFactorX_ * (poseMeans[currentStep].x + lineLength * std::cos(poseMeans[currentStep].theta)),
+                                    -scaleFactorY_ * (poseMeans[currentStep].y + lineLength * std::sin(poseMeans[currentStep].theta))))
+        };
+        line[0].color = sf::Color::Red;
+        line[1].color = sf::Color::Red;
+        window_.draw(line, 2, sf::Lines);
+    }
+
+    // Draw landmarks (assuming they are provided similarly to poseMeans)
+    // Adjust according to your data structure
+    std::vector<Pose> landmarks;  // Replace with actual landmark data if available
+    for (const auto& landmark : landmarks) {
+        sf::CircleShape landmarkCircle(10.f); // Adjust circle size for landmarks
+        landmarkCircle.setFillColor(sf::Color(150, 150, 150)); // Gray color for landmarks
+        landmarkCircle.setPosition(scaleFactorX_ * landmark.x, -scaleFactorY_ * landmark.y);
+        window_.draw(landmarkCircle);
     }
 }
 
@@ -56,4 +77,3 @@ void Visualization::handleEvents() {
         }
     }
 }
-
