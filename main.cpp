@@ -146,6 +146,7 @@ int main()
 
         // Initialize zHat and S before processing measurements
         Eigen::MatrixXd S;
+        
         Eigen::MatrixXd zHat;
 
         // If any measurements are available

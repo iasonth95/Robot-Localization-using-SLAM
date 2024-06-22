@@ -34,7 +34,7 @@ std::tuple<Eigen::MatrixXd, int> Observation::get(std::vector<Robot> &Robots, in
             double bearing = Robots[robot_num].b[index]; // phi or alpha
 
             // Update z with the current observation
-            z << range, bearing, landmarkID - 5;
+            z << range, bearing, landmarkID - 6;
         }
         index++;
     }
