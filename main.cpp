@@ -183,7 +183,12 @@ int main()
 
                 // Compute S per equation 9 (just the parenthesis of Kalman gain)
                 S = H * poseCovBar * H.transpose() + Q_t;
-
+                std::cout << "Matrix:\n"
+                          << S << std::endl;
+                std::cout << "Matrix:\n"
+                          << zHat << std::endl;
+                std::cout << "Matrix:\n"
+                          << z << std::endl;
                 // Compute Kalman gain per equation 10
                 MatrixXd K = poseCovBar * H.transpose() * S.inverse();
 

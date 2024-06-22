@@ -13,7 +13,7 @@ std::tuple<Eigen::MatrixXd, int> Observation::get(std::vector<Robot> &Robots, in
     Eigen::MatrixXd z = Eigen::MatrixXd::Zero(3, 1); // Initialize z as a 3x1 zero vector
 
     // Ensure the index is within bounds
-    while (index < Robots[robot_num].barcode_num.size() && Robots[robot_num].time[index] - t < 0.005)
+    while (index < Robots[robot_num].barcode_num.size() && Robots[robot_num].measurement_time[index] - t < 0.005)
     {
         double barcode = Robots[robot_num].barcode_num[index];
         double landmarkID = 0;
