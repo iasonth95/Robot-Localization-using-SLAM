@@ -136,9 +136,10 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
             while (std::getline(measurementFile, line))
             {
                 std::istringstream iss(line);
-                double time, barcode_num, r, b;
-                if (iss >> time >> barcode_num >> r >> b)
+                double measurement_time, barcode_num, r, b;
+                if (iss >> measurement_time >> barcode_num >> r >> b)
                 {
+                    robot.measurement_time.push_back(measurement_time);
                     robot.barcode_num.push_back(barcode_num);
                     robot.r.push_back(r);
                     robot.b.push_back(b);
@@ -187,13 +188,14 @@ void DataLoader::printData(const std::vector<Barcode> &Barcodes,
     std::cout << "\nRobots:" << std::endl;
     for (const auto &robot : Robots)
     {
+        std::cout << "Time (size " << robot.time.size() << "): ";
         std::cout << "Time: ";
         for (const auto &time : robot.time)
         {
             std::cout << time << " ";
         }
         std::cout << std::endl;
-
+        std::cout << "X (size " << robot.x.size() << "): ";
         std::cout << "X: ";
         for (const auto &x : robot.x)
         {
@@ -201,6 +203,7 @@ void DataLoader::printData(const std::vector<Barcode> &Barcodes,
         }
         std::cout << std::endl;
 
+        std::cout << "Y (size " << robot.y.size() << "): ";
         std::cout << "Y: ";
         for (const auto &y : robot.y)
         {
@@ -208,11 +211,55 @@ void DataLoader::printData(const std::vector<Barcode> &Barcodes,
         }
         std::cout << std::endl;
 
+        std::cout << "Theta (size " << robot.theta.size() << "): ";
         std::cout << "Theta: ";
         for (const auto &theta : robot.theta)
         {
             std::cout << theta << " ";
         }
         std::cout << std::endl;
+        std::cout << "\n";
+
+        std::cout << "V (size " << robot.v.size() << "): ";
+        std::cout << "V: ";
+        for (const auto& v : robot.v) {
+            std::cout << v << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "W (size " << robot.w.size() << "): "; 
+        std::cout << "W: ";
+        for (const auto& w : robot.w) {
+            std::cout << w << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "measurement_time (size " << robot.measurement_time.size() << "): ";
+        std::cout << "measurement_time: ";
+        for (const auto& t : robot.measurement_time) {
+            std::cout << t << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "Barcode Num (size " << robot.barcode_num.size() << "): ";
+        std::cout << "Barcode Num: ";
+        for (const auto& barcode_num : robot.barcode_num) {
+            std::cout << barcode_num << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "R (size " << robot.r.size() << "): ";
+        std::cout << "R: ";
+        for (const auto& r : robot.r) {
+            std::cout << r << " ";
+        }
+        std::cout << "\n";
+    
+        std::cout << "B (size " << robot.b.size() << "): ";
+        std::cout << "B: ";
+        for (const auto& b : robot.b) {
+            std::cout << b << " ";
+        }
+        std::cout << "\n";
     }
 }

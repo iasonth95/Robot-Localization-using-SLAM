@@ -39,6 +39,7 @@ struct Robot
     std::vector<double> theta;       // orientation
     std::vector<double> v;           // linear velocity
     std::vector<double> w;           // angular velocity
+    std::vector<double> measurement_time;
     std::vector<double> barcode_num; // barcode on each robot and landmark
     std::vector<double> r;           // range
     std::vector<double> b;           // bearing (angle)
@@ -49,6 +50,7 @@ struct Robot
     std::vector<double> sampled_theta;
     std::vector<double> sampled_v;
     std::vector<double> sampled_w;
+    std::vector<double> sampled_measurement_time;
     std::vector<double> sampled_barcode_num;
     std::vector<double> sampled_r;
     std::vector<double> sampled_b;

@@ -10,7 +10,7 @@ Observation::Observation()
 
 std::tuple<Eigen::MatrixXd, int> Observation::get(std::vector<Robot> &Robots, int robot_num, double t, int &index, std::unordered_map<double, double> &codeDict)
 {
-    Eigen::MatrixXd z; // To store observations    std::vector<Eigen::Vector3d> observations;  // To store observations
+    Eigen::MatrixXd z = Eigen::MatrixXd::Zero(3, 1); // Initialize z as a 3x1 zero vector
 
     // Ensure the index is within bounds
     while (index < Robots[robot_num].barcode_num.size() && Robots[robot_num].time[index] - t < 0.005)
@@ -33,18 +33,8 @@ std::tuple<Eigen::MatrixXd, int> Observation::get(std::vector<Robot> &Robots, in
             double range = Robots[robot_num].r[index];   // r
             double bearing = Robots[robot_num].b[index]; // phi or alpha
 
-            if (z.cols() == 0)
-            {
-                z.resize(3, 1);
-                z << range, bearing, landmarkID - 5;
-            }
-            else
-            {
-                Eigen::MatrixXd newZ(3, z.cols() + 1);
-                newZ.block(0, 0, 3, z.cols()) = z;
-                newZ.col(z.cols()) << range, bearing, landmarkID - 5;
-                z = newZ;
-            }
+            // Update z with the current observation
+            z << range, bearing, landmarkID - 5;
         }
         index++;
     }

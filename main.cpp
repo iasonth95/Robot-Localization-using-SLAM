@@ -6,14 +6,12 @@
 #include <vector>
 #include <unordered_map>
 #include <cmath>
-#include <armadillo>
 #include <Eigen/Dense>
 #include "Visualization.h" // Include Visualization class header
 
 using namespace Eigen;
 
 // Define a struct for pose mean and covariance
-
 class RobotEstimation
 {
 public:
@@ -28,7 +26,6 @@ double degrees_to_radians(double degrees)
 
 int main()
 {
-
     double deltaT = 0.02;                                           // Sample step
     std::vector<double> alphas = {0.2, 0.03, 0.09, 0.08, 0.0, 0.0}; // Motion model noise parameters
 
@@ -56,8 +53,9 @@ int main()
     Dataset sampling_dataset;
     // Call the data loading method to load the data
     dataLoader.loadData(Barcodes, Landmarks, Robots);
+    // dataLoader.printData(Barcodes, Landmarks, Robots);
     auto result = sampling_dataset.sample(Robots, sample_time);
-
+    // sampling_dataset.printSampledData(result);
     // Localization task
     robot_num = robot_num - 1; // Specify the robot number
     std::cout << "Localization task for robot " << Robots[robot_num].sampled_v[0] << std::endl;
@@ -86,12 +84,13 @@ int main()
     }
 
     // Check if time of measurement index is smaller than t = 600
-    // while (measurementIndex < Robots[robot_num].time.size() && Robots[robot_num].time[measurementIndex] < t - 0.05) {
-    while (Robots[robot_num].time[measurementIndex] < t - 0.05)
+    // while (measurementIndex < Robots[robot_num].time.size() && Robots[robot_num].time[measurementIndex] < t - 0.05)
+    while (Robots[robot_num].measurement_time[measurementIndex] < t - 0.05)
     {
         // Update index
         ++measurementIndex;
     }
+
     // Loop through all odometry and measurement samples
     // Updating the robot's pose estimate with each step
     // Reference table 7.2 in Probabilistic Robotics
@@ -99,23 +98,13 @@ int main()
     for (int i = start; i < Robots[robot_num].sampled_time.size(); ++i)
     {
         double theta = poseMean.theta; // Theta
-        // double theta_rads = degrees_to_radians(theta);
-        //  Update time
-        double t = Robots[robot_num].sampled_time[i];
+        // Update time
+        t = Robots[robot_num].sampled_time[i];
         // Update movement vector per equation 1
         std::vector<double> u_t = {Robots[robot_num].sampled_v[i], Robots[robot_num].sampled_w[i]}; // [v_t ; omega_t]
         double rot = deltaT * u_t[1];                                                               // rot = delta_theta = deltaT * omega_t
         double halfRot = rot / 2.0;
-        ;
-        /*if (rot == 0) {
-            double halfRot = 0;
-        }
-        else{
-            double halfRot = rot / 2.0;
-        } // Just half the rotational}
-        */
         double trans = u_t[0] * deltaT; // Translational: v_t * deltaT
-        // DeltaT here is defined as deltaS_r = deltaS_l
 
         Matrix3d G_t;
         Matrix2d M_t;
@@ -149,43 +138,27 @@ int main()
         // Calculate estimated pose covariance per equation 5 (Σ^t)
         Matrix3d poseCovBar = G_t * poseCov * G_t.transpose() + V_t * M_t * V_t.transpose();
 
-        // std::cout<<"Pose Covariance: "<<poseCovBar<<std::endl;
-
         Observation get_observations;
 
-        Eigen::MatrixXd z; // Initialize as an empty matrix
-        // Get measurements for the current timestep, if any
-
+        Eigen::MatrixXd z(3, 1); // Initialize z as a 3x1 vector
         // Get measurements for the current timestep, if any
         std::tie(z, measurementIndex) = get_observations.get(Robots, robot_num, t, measurementIndex, codeDict);
 
-        // Create matrices for expected measurement and measurement covariance
+        // Initialize zHat and S before processing measurements
         Eigen::MatrixXd S;
         Eigen::MatrixXd zHat;
-
-        // If z is not empty, update the size of S and zHat accordingly
-        if (z.cols() > 0)
-        {
-            S.resize(z.cols(), 3);
-            zHat.resize(3, z.cols());
-        }
-        else
-        {
-            // If z is empty, initialize S and zHat with appropriate dimensions
-            // For example, you can initialize them with zeros
-            S.resize(3, 3);
-            S.setZero();
-            zHat.resize(3, 1); // Initialize with 1 column
-            zHat.setZero();
-        }
 
         // If any measurements are available
         if (z.cols() > 0 && z(2, 0) > 1)
         {
+            // Resize zHat and S based on number of measurements
+            zHat.resize(3, z.cols());
+            S.resize(3, 3); // S will always be a 3x3 matrix
+
             // Loop over every measurement
             for (int k = 0; k < z.cols(); ++k)
             {
-                int j = z(2, k);
+                int j = static_cast<int>(z(2, k)); // Ensure the index is an integer
 
                 // Get coordinates of the measured landmark
                 Vector2d m(Landmarks[j].x, Landmarks[j].y);
@@ -208,42 +181,18 @@ int main()
                     (yDist / q), (-1 * (xDist / q)), -1,
                     0, 0, 0;
 
-                //////////////////////////////////////////////////////////
-                // Access element of the MatrixXd matrices
-                double value = H(0, 1);
-                std::cout << "Matrix:\n"
-                          << H << std::endl;
-                std::cout << "Matrix:\n"
-                          << poseCovBar << std::endl;
-                std::cout << "Matrix:\n"
-                          << H.transpose() << std::endl;
-                std::cout << "Matrix:\n"
-                          << Q_t << std::endl;
-                std::cout << "Matrix:\n"
-                          << S << std::endl;
-                std::cout << "Matrix:\n"
-                          << z << std::endl;
-                // Compute the expression H * poseCovBar * H.transpose() + Q_t
-                Eigen::MatrixXd expression = H * poseCovBar * H.transpose() + Q_t;
-                // Ensure the expression has the correct size
-                std::cout << "expression:\n"
-                          << expression << std::endl;
-                // assert(expression.rows() == 3 && expression.cols() == 3);
-
                 // Compute S per equation 9 (just the parenthesis of Kalman gain)
                 S = H * poseCovBar * H.transpose() + Q_t;
 
                 // Compute Kalman gain per equation 10
                 MatrixXd K = poseCovBar * H.transpose() * S.inverse();
 
-                // Update pose mean and covariance estimates
-                // per equations 11 and 12 (z_t+1 = z_t|t-1)
+                // Update pose mean and covariance estimates per equations 11 and 12 (z_t+1 = z_t|t-1)
                 poseMeanBar += K * (z.col(k) - zHat.col(k));
                 poseCovBar = (Matrix3d::Identity() - (K * H)) * poseCovBar;
-                // std::cout << "poseMeanBar\n " << poseMeanBar << std::endl;
-                // std::cout << "poseCovBar\n " << poseCovBar << std::endl;
             }
         }
+
         // Store estimation
         robotEstimation.poseMeans.push_back({poseMeanBar[0], poseMeanBar[1], poseMeanBar[2]});
         // Update poseMean with the values of poseMeanBar
@@ -252,31 +201,21 @@ int main()
         poseMean.theta = poseMeanBar[2];
         poseCov = poseCovBar;
 
-        // Calculate error between mean pose and ground truth
-        // for testing only
-
-        // Retrieve the ground truth values for the current timestep
+        // Calculate error between mean pose and ground truth for testing only
         Vector3d groundtruth;
         groundtruth << Robots[robot_num].x[i],
             Robots[robot_num].y[i],
             Robots[robot_num].theta[i];
 
-        // Calculate the error between the ground truth and the estimated poseMean
-        Vector3d error;
-        error << groundtruth[0] - poseMean.x,
-            groundtruth[1] - poseMean.y,
-            groundtruth[2] - poseMean.theta;
-
-        // Print the error for debugging/testing purposes
+        Vector3d error = groundtruth - Vector3d(poseMean.x, poseMean.y, poseMean.theta);
         std::cout << "Error between ground truth and poseMean: " << error.transpose() << std::endl;
-
-        // Visualization: Assuming you have a Visualization class instance initialized earlier
-        // Draw the estimated pose (poseMeanBar) and ground truth for visualization
-        
     }
 
+
+    std::cout << "Now we go to the latest loop for visualizing" << std::endl;
     // Initialize SFML visualization
     Visualization vis;
+    std::cout << "Now we go to the latest loop for visualizing" << std::endl;
 
     // Create vectors to store the ground truth values for each timestep
     std::vector<double> groundTruthX;
@@ -284,14 +223,18 @@ int main()
     std::vector<double> groundTruthTheta;
 
     // Populate the ground truth vectors with the robot's sampled values
-    for (int i = start; i < Robots[0].sampled_x.size(); ++i) {
+    for (int i = start; i < Robots[0].sampled_x.size(); ++i)
+    {
         groundTruthX.push_back(Robots[0].sampled_x[i]);
         groundTruthY.push_back(Robots[0].sampled_y[i]);
         groundTruthTheta.push_back(Robots[0].sampled_theta[i]);
     }
 
+    std::cout << "Now we go to the latest loop for visualizing" << std::endl;
+
     // Main loop to simulate continuous updating of the visualization
-    for (int i = 0; i < robotEstimation.poseMeans.size(); ++i) {
+    for (int i = 0; i < robotEstimation.poseMeans.size(); ++i)
+    {
         // Retrieve poseMean for current timestep
         std::vector<Pose> poseMeans = robotEstimation.poseMeans;
 
@@ -305,11 +248,12 @@ int main()
         vis.handleEvents();
 
         // Optional delay to control frame rate
-        //sf::sleep(sf::milliseconds(50));  // Adjust as needed
+        // sf::sleep(sf::milliseconds(50));  // Adjust as needed
     }
 
     // Keep the window open until it is manually closed
-    while (vis.isOpen()) {
+    while (vis.isOpen())
+    {
         vis.handleEvents();
     }
 
