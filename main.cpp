@@ -128,7 +128,7 @@ int main()
         // Calculate pose update
         poseUpdate << trans * cos(theta + halfRot),
             trans * sin(theta + halfRot),
-            u_t[1]; // Assuming u_t(1) is the rotation component (rot)
+            rot; // Assuming u_t(1) is the rotation component (rot)
 
         // Calculate estimated pose mean per equation 1
         Vector3d poseMeanBar = {poseMean.x + poseUpdate[0],
@@ -145,17 +145,15 @@ int main()
         std::tie(z, measurementIndex) = get_observations.get(Robots, robot_num, t, measurementIndex, codeDict);
 
         // Initialize zHat and S before processing measurements
-        Eigen::MatrixXd S;
-        
         Eigen::MatrixXd zHat;
+        std::vector<Matrix3d> S_vector;  // Vector to store S matrices
 
         // If any measurements are available
         if (z.cols() > 0 && z(2, 0) > 1)
         {
-            // Resize zHat and S based on number of measurements
+            // Resize zHat based on number of measurements
             zHat.resize(3, z.cols());
-            S.resize(3, 3); // S will always be a 3x3 matrix
-
+            zHat.setZero();  // Set all elements to zero
             // Loop over every measurement
             for (int k = 0; k < z.cols(); ++k)
             {
@@ -183,16 +181,27 @@ int main()
                     0, 0, 0;
 
                 // Compute S per equation 9 (just the parenthesis of Kalman gain)
-                S = H * poseCovBar * H.transpose() + Q_t;
-                std::cout << "Matrix:\n"
-                          << S << std::endl;
-                std::cout << "Matrix:\n"
-                          << zHat << std::endl;
-                std::cout << "Matrix:\n"
-                          << z << std::endl;
-                // Compute Kalman gain per equation 10
-                MatrixXd K = poseCovBar * H.transpose() * S.inverse();
+                Matrix3d S_k = H * poseCovBar * H.transpose() + Q_t;
+                S_vector.push_back(S_k);  // Store each S_k in the vector
 
+                // Normalize the residual
+                //Vector3d nu = z.col(k) - zHat.col(k);
+                //nu(1) = bearing.conBear(nu(1));
+                std::cout << "S_k:\n"
+                          << S_k << std::endl;
+                std::cout << "H:\n"
+                          << H << std::endl;          
+                std::cout << "zHat:\n"
+                          << zHat << std::endl;
+                std::cout << "z:\n"
+                          << z << std::endl;
+                std::cout << "poseMeanBar:\n"
+                          << poseMeanBar << std::endl;
+                std::cout << "poseCovBar:\n"
+                          << poseCovBar << std::endl;
+                // Compute Kalman gain per equation 10
+                MatrixXd K = poseCovBar * H.transpose() * S_vector[k].inverse();
+                //////////////// Z and ZHAT is outputed wrong from the observation they can be [3,1] or [3, 3] or [3, x] <- OBSERVATION.cpp
                 // Update pose mean and covariance estimates per equations 11 and 12 (z_t+1 = z_t|t-1)
                 poseMeanBar += K * (z.col(k) - zHat.col(k));
                 poseCovBar = (Matrix3d::Identity() - (K * H)) * poseCovBar;
