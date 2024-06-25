@@ -37,6 +37,7 @@ struct Robot
     std::vector<double> x;           // position
     std::vector<double> y;           // position
     std::vector<double> theta;       // orientation
+    std::vector<double> odometry_time; // time of odometry data
     std::vector<double> v;           // linear velocity
     std::vector<double> w;           // angular velocity
     std::vector<double> measurement_time;
@@ -48,12 +49,14 @@ struct Robot
     std::vector<double> sampled_x;
     std::vector<double> sampled_y;
     std::vector<double> sampled_theta;
+    std::vector<double> sampled_odometry_time; // time of odometry data
     std::vector<double> sampled_v;
     std::vector<double> sampled_w;
     std::vector<double> sampled_measurement_time;
     std::vector<double> sampled_barcode_num;
     std::vector<double> sampled_r;
     std::vector<double> sampled_b;
+    
 };
 
 #endif

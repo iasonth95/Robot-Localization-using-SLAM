@@ -35,6 +35,14 @@ void Dataset::normalizeTime(std::vector<Robot> &Robots, double &min_time, double
         }
     }
 
+    for (auto &robot : Robots)
+    {
+        for (auto &t : robot.odometry_time)
+        {
+            t -= min_time;
+        }
+    }
+
     max_time -= min_time;
 }
 
@@ -51,69 +59,101 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
     for (auto &robot : Robots)
     {
         std::vector<double> sampled_time(timesteps);
-        std::vector<double> sampled_x(timesteps);
-        std::vector<double> sampled_y(timesteps);
-        std::vector<double> sampled_theta(timesteps);
-        std::vector<double> sampled_v(timesteps);
-        std::vector<double> sampled_w(timesteps);
+        std::vector<double> sampled_x(timesteps, 0.0);
+        std::vector<double> sampled_y(timesteps, 0.0);
+        std::vector<double> sampled_theta(timesteps, 0.0);
+        std::vector<double> sampled_v(timesteps, 0.0);
+        std::vector<double> sampled_w(timesteps, 0.0);
         std::vector<double> sampled_measurement_time(robot.measurement_time.size());
         std::vector<double> sampled_barcode_num(robot.barcode_num); // Identical to original
         std::vector<double> sampled_r(robot.r);                     // Identical to original
         std::vector<double> sampled_b(robot.b);                     // Identical to original
 
-        int k = 0;
-        double t = 0;
-        size_t i = 0;
-
-        while (k < timesteps)
+        // Sample ground truth data
         {
-            sampled_time[k] = t;
+            int k = 0;
+            double t = 0;
+            size_t i = 1;
 
-            while (i < robot.time.size() && robot.time[i] <= t)
+            while (t <= max_time)
             {
-                ++i;
-            }
+                sampled_time[k] = t;
 
-            if (i == 0)
-            {
-                sampled_x[k] = robot.x[0];
-                sampled_y[k] = robot.y[0];
-                sampled_theta[k] = robot.theta[0];
-                sampled_v[k] = robot.v[0];
-                sampled_w[k] = robot.w[0];
-            }
-            else if (i == robot.time.size())
-            {
-                sampled_x[k] = robot.x.back();
-                sampled_y[k] = robot.y.back();
-                sampled_theta[k] = robot.theta.back();
-                sampled_v[k] = robot.v.back();
-                sampled_w[k] = robot.w.back();
-            }
-            else
-            {
-                double p = (t - robot.time[i - 1]) / (robot.time[i] - robot.time[i - 1]);
-
-                sampled_x[k] = (1 - p) * robot.x[i - 1] + p * robot.x[i];
-                sampled_y[k] = (1 - p) * robot.y[i - 1] + p * robot.y[i];
-
-                double d_theta = robot.theta[i] - robot.theta[i - 1];
-                if (d_theta > M_PI)
+                while (i < robot.time.size() && robot.time[i] <= t)
                 {
-                    d_theta -= 2 * M_PI;
+                    ++i;
                 }
-                else if (d_theta < -M_PI)
-                {
-                    d_theta += 2 * M_PI;
-                }
-                sampled_theta[k] = (1 - p) * robot.theta[i - 1] + p * (robot.theta[i - 1] + d_theta);
 
-                sampled_v[k] = (1 - p) * robot.v[i - 1] + p * robot.v[i];
-                sampled_w[k] = (1 - p) * robot.w[i - 1] + p * robot.w[i];
+                if (i == 1 || i == robot.time.size())
+                {
+                    sampled_x[k] = (i == 1) ? robot.x[0] : robot.x.back();
+                    sampled_y[k] = (i == 1) ? robot.y[0] : robot.y.back();
+                    sampled_theta[k] = (i == 1) ? robot.theta[0] : robot.theta.back();
+                }
+                else
+                {
+                    double p = (t - robot.time[i - 1]) / (robot.time[i] - robot.time[i - 1]);
+
+                    sampled_x[k] = p * (robot.x[i] - robot.x[i - 1]) + robot.x[i - 1];
+                    sampled_y[k] = p * (robot.y[i] - robot.y[i - 1]) + robot.y[i - 1];
+
+                    double d_theta = robot.theta[i] - robot.theta[i - 1];
+                    if (d_theta > M_PI)
+                    {
+                        d_theta -= 2 * M_PI;
+                    }
+                    else if (d_theta < -M_PI)
+                    {
+                        d_theta += 2 * M_PI;
+                    }
+                    sampled_theta[k] = p * d_theta + robot.theta[i - 1];
+                }
+
+                ++k;
+                t += sample_time;
             }
 
-            ++k;
-            t += sample_time;
+            robot.sampled_time = sampled_time;
+            robot.sampled_x = sampled_x;
+            robot.sampled_y = sampled_y;
+            robot.sampled_theta = sampled_theta;
+        }
+
+        // Sample odometry data
+        {
+            std::vector<double> sampled_odometry_time(timesteps);
+            int k = 0;
+            double t = 0;
+            size_t i = 1;
+
+            while (t <= max_time)
+            {
+                sampled_odometry_time[k] = t;
+
+                while (i < robot.odometry_time.size() && robot.odometry_time[i] <= t)
+                {
+                    ++i;
+                }
+
+                if (i == 1 || i == robot.odometry_time.size())
+                {
+                    sampled_v[k] = (i == 1) ? robot.v[0] : robot.v.back();
+                    sampled_w[k] = (i == 1) ? robot.w[0] : robot.w.back();
+                }
+                else
+                {
+                    double p = (t - robot.odometry_time[i - 1]) / (robot.odometry_time[i] - robot.odometry_time[i - 1]);
+
+                    sampled_v[k] = p * (robot.v[i] - robot.v[i - 1]) + robot.v[i - 1];
+                    sampled_w[k] = p * (robot.w[i] - robot.w[i - 1]) + robot.w[i - 1];
+                }
+
+                ++k;
+                t += sample_time;
+            }
+
+            robot.sampled_v = sampled_v;
+            robot.sampled_w = sampled_w;
         }
 
         // Adjust measurement_time according to sample_time
@@ -121,14 +161,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
         {
             sampled_measurement_time[i] = std::floor(robot.measurement_time[i] / sample_time + 0.5) * sample_time;
         }
-        
 
-        robot.sampled_time = sampled_time;
-        robot.sampled_x = sampled_x;
-        robot.sampled_y = sampled_y;
-        robot.sampled_theta = sampled_theta;
-        robot.sampled_v = sampled_v;
-        robot.sampled_w = sampled_w;
         robot.sampled_measurement_time = sampled_measurement_time;
         robot.sampled_barcode_num = sampled_barcode_num;
         robot.sampled_r = sampled_r;
@@ -139,6 +172,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
 
     return std::make_tuple(Robots, timesteps);
 }
+
 void Dataset::printSampledData(const std::tuple<std::vector<Robot>, int>& sampledData) const {
     const auto& [robots, timesteps] = sampledData;
 
@@ -173,6 +207,13 @@ void Dataset::printSampledData(const std::tuple<std::vector<Robot>, int>& sample
         std::cout << "Theta: ";
         for (const auto& theta : robot.sampled_theta) {
             std::cout << theta << " ";
+        }
+        std::cout << "\n";
+
+        std::cout << "odometry_time (size " << robot.odometry_time.size() << "): ";
+        std::cout << "odometry_time: ";
+        for (const auto& t : robot.odometry_time) {
+            std::cout << t << " ";
         }
         std::cout << "\n";
 

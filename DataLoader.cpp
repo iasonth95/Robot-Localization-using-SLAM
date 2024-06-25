@@ -113,6 +113,7 @@ std::tuple<std::vector<Barcode>, std::vector<Landmark_Groundtruth>, std::vector<
                 double time, v, w;
                 if (iss >> time >> v >> w)
                 {
+                    robot.odometry_time.push_back(time);
                     robot.v.push_back(v);
                     robot.w.push_back(w);
                 }
@@ -218,6 +219,13 @@ void DataLoader::printData(const std::vector<Barcode> &Barcodes,
             std::cout << theta << " ";
         }
         std::cout << std::endl;
+        std::cout << "\n";
+
+        std::cout << "odometry_time (size " << robot.odometry_time.size() << "): ";
+        std::cout << "odometry_time: ";
+        for (const auto& t : robot.odometry_time) {
+            std::cout << t << " ";
+        }
         std::cout << "\n";
 
         std::cout << "V (size " << robot.v.size() << "): ";

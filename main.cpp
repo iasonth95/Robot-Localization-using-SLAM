@@ -53,7 +53,7 @@ int main()
     Dataset sampling_dataset;
     // Call the data loading method to load the data
     dataLoader.loadData(Barcodes, Landmarks, Robots);
-    // dataLoader.printData(Barcodes, Landmarks, Robots);
+    dataLoader.printData(Barcodes, Landmarks, Robots);
     auto result = sampling_dataset.sample(Robots, sample_time);
     // sampling_dataset.printSampledData(result);
     // Localization task
@@ -201,7 +201,7 @@ int main()
                           << poseCovBar << std::endl;
                 // Compute Kalman gain per equation 10
                 MatrixXd K = poseCovBar * H.transpose() * S_vector[k].inverse();
-                //////////////// Z and ZHAT is outputed wrong from the observation they can be [3,1] or [3, 3] or [3, x] <- OBSERVATION.cpp
+
                 // Update pose mean and covariance estimates per equations 11 and 12 (z_t+1 = z_t|t-1)
                 poseMeanBar += K * (z.col(k) - zHat.col(k));
                 poseCovBar = (Matrix3d::Identity() - (K * H)) * poseCovBar;
