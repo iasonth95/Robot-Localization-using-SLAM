@@ -96,6 +96,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
 
                     sampled_x[k] = p * (robot.x[i] - robot.x[i - 1]) + robot.x[i - 1];
                     sampled_y[k] = p * (robot.y[i] - robot.y[i - 1]) + robot.y[i - 1];
+                    sampled_theta[k] = p * (robot.theta[i] - robot.theta[i - 1]) + robot.theta[i - 1];
 
                     double d_theta = robot.theta[i] - robot.theta[i - 1];
                     if (d_theta > M_PI)
@@ -106,7 +107,7 @@ std::tuple<std::vector<Robot>, int> Dataset::sample(std::vector<Robot> &Robots, 
                     {
                         d_theta += 2 * M_PI;
                     }
-                    sampled_theta[k] = p * d_theta + robot.theta[i - 1];
+                    //sampled_theta[k] = p * d_theta + robot.theta[i - 1];
                 }
 
                 ++k;
