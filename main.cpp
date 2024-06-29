@@ -8,6 +8,7 @@
 #include <cmath>
 #include <Eigen/Dense>
 #include "Visualization.h" // Include Visualization class header
+#include <omp.h> // Include OpenMP header
 
 using namespace Eigen;
 
@@ -24,7 +25,7 @@ double degrees_to_radians(double degrees)
 
 int main()
 {
-    double deltaT = 0.02;                                           // Sample step
+    double deltaT = 0.02; // Sample step
     std::vector<double> alphas = {0.1, 0.01, 0.18, 0.08, 0.0, 0.0}; // Motion model noise parameters
 
     // Measurement model noise parameters
@@ -34,11 +35,11 @@ int main()
 
     // Q_t matrix
     Matrix2d Q_t;
-    //Q_t << sigma_range * sigma_range, 0.0, 0.0,
-        //0.0, sigma_bearing * sigma_bearing, 0.0,
-        //0.0, 0.0, sigma_id * sigma_id;
-    Q_t << 11.8, 0.0,
-        0.0, 0.18;
+    Q_t << sigma_range * sigma_range, 0.0,
+        0.0, sigma_bearing * sigma_bearing;
+  
+    //Q_t << 11.8, 0.0,
+        //0.0, 0.18;
     double measurement_prob = 0.0;
     int robot_num = 1;
     int n_landmarks = 15;
@@ -55,13 +56,14 @@ int main()
     dataLoader.printData(Barcodes, Landmarks, Robots);
     auto result = sampling_dataset.sample(Robots, sample_time);
     // sampling_dataset.printSampledData(result);
+
     // Localization task
     robot_num = robot_num - 1; // Specify the robot number
     std::cout << "Localization task for robot " << Robots[robot_num].sampled_v[0] << std::endl;
     RobotEstimation robotEstimation;
 
     // Initialize Estimation
-    int start = 599;                                  // Start index
+    int start = 599; // Start index
     double t = Robots[robot_num].sampled_time[start]; // Start time
     Eigen::Vector3d stateMean3d;
     stateMean3d << Robots[robot_num].sampled_x[start],
@@ -77,12 +79,10 @@ int main()
     stateCov.setZero();
     stateCov.block(0, 0, 3, 3).setConstant(0.001);
 
-
     for (int i = 3; i < 2 * n_landmarks + 3; ++i) {
         stateCov(i, i) = 10;
     }
 
-    // Track which measurement is next received
     int measurementIndex = 0;
 
     // Set up map between barcodes and landmark IDs (known correlation)
@@ -94,7 +94,8 @@ int main()
 
     // Loop through all odometry and measurement samples
     // Updating the robot's pose estimate with each step
-    //#pragma omp parallel for num_threads(2) // Adjust num_threads as needed
+
+    //#pragma omp parallel for num_threads(4) schedule(static, 1)// Adjust num_threads as needed
     for (int i = start; i < Robots[robot_num].sampled_time.size(); ++i)
     {
         double theta = stateMean(2); // Theta
@@ -106,7 +107,6 @@ int main()
         double halfRot = rot / 2.0;
         double trans = u_t[0] * deltaT; // Translational: v_t * deltaT
 
-        //MatrixXd G_t(2 * n_landmarks + 3, 2 * n_landmarks + 3);
         Matrix2d M_t;
         MatrixXd V_t(3, 2); // Define V_t as 3x2 matrix
         Vector3d poseUpdate;
@@ -118,7 +118,6 @@ int main()
             0, 0, trans * cos(theta + halfRot),
             0, 0, 0;
         Eigen::MatrixXd G_t = Eigen::MatrixXd::Identity(2 * n_landmarks + 3, 2 * n_landmarks + 3) + F_x.transpose() * g_t * F_x;
-
 
         // Calculate motion covariance in control space per equation 3
         M_t << std::pow(alphas[0] * std::abs(u_t[0]) + alphas[1] * std::abs(u_t[1]), 2), 0,
@@ -142,6 +141,7 @@ int main()
         stateMeanBar(2) = bearing.conBear(stateMeanBar(2));
 
         MatrixXd R_t = V_t * M_t * V_t.transpose();
+
         // Calculate estimated state covariance per equation 5 (Σ^t)
         Eigen::MatrixXd stateCovBar = G_t * stateCov * G_t.transpose() + F_x.transpose() * R_t * F_x;
 
@@ -150,28 +150,29 @@ int main()
 
         // Get measurements for the current timestep, if any
         std::tie(z, measurementIndex) = get_observations.get(Robots, robot_num, t, measurementIndex, codeDict);
-        //std::cout << "z:\n"
-                          //<< z << std::endl;
-                //std::cout << "poseMeanBar:\n";
-        // Initialize zHat and S before processing measurements
         Eigen::MatrixXd zHat;
-/*      std::cout<<"stateMeanBar"<<std::endl;
+
+        /*std::cout << "z:\n"
+                << z << std::endl;
+                std::cout << "poseMeanBar:\n";     
+
+        std::cout<<"stateMeanBar"<<std::endl;
         std::cout<<stateMeanBar<<std::endl;
         std::cout << "V_t:\n"
-                          << V_t << std::endl;
-                std::cout << "M_t:\n"
-                          << M_t<< std::endl;          
-                std::cout << "G_t:\n"
-                          << G_t << std::endl;
-                std::cout << "poseUpdate:\n"
-                          << poseUpdate << std::endl;
-                std::cout << "stateMeanBar:\n"
-                          << stateMeanBar << std::endl;
-                std::cout << "stateCov:\n"
-                          << stateCov << std::endl;
-                std::cout << "stateCovBar:\n"
-                          << stateCovBar << std::endl;
-                std::cout<<"F_x"<<std::endl;
+                        << V_t << std::endl;
+            std::cout << "M_t:\n"
+                        << M_t<< std::endl;          
+            std::cout << "G_t:\n"
+                        << G_t << std::endl;
+            std::cout << "poseUpdate:\n"
+                        << poseUpdate << std::endl;
+            std::cout << "stateMeanBar:\n"
+                        << stateMeanBar << std::endl;
+            std::cout << "stateCov:\n"
+                        << stateCov << std::endl;
+            std::cout << "stateCovBar:\n"
+                        << stateCovBar << std::endl;
+            std::cout<<"F_x"<<std::endl;
         std::cout<<F_x<<std::endl;
 std::cout<<"R_t"<<std::endl;
         std::cout<<R_t<<std::endl;
@@ -190,7 +191,6 @@ std::cout<<"R_t"<<std::endl;
                 int j = static_cast<int>(z(2, k)); // Ensure the index is an integer
 
                 // If the landmark has never been seen before
-                //std::cout<< stateMeanBar(3 + 2 * j) << stateMeanBar(2 + 2 * j) << stateMeanBar(1 + 2 * j)  << std::endl;
                 if (stateMeanBar(3 + 2 * j) == 0)
                 {
                     // Add it to the state vector
@@ -237,16 +237,7 @@ std::cout<<"R_t"<<std::endl;
 
                 // Define K_t matrix (Kalman gain)
                 Eigen::MatrixXd K_t = stateCovBar * H_t.transpose() * (H_t * stateCovBar * H_t.transpose() + Q_t).inverse();  // Assuming S_vector has only one element
-                //std::cout << "zhat:\n"
-                            //<< zHat << std::endl;
-                    //std::cout << "zHat:\n";
-                
-             
-                //std::cout << "zhat:\n"
-                            //<< z.col(k).head<2>() << std::endl;
-                    //std::cout << "zHatWEIRD:\n";
                 Eigen::MatrixXd innovation = z.col(k).head<2>() - zHat.col(k);
-
                 
                 // Update state mean and covariance
                 stateMeanBar = stateMeanBar + K_t * innovation;
@@ -258,32 +249,30 @@ std::cout<<"R_t"<<std::endl;
         }
         
         stateMean = stateMeanBar;
-        //std::cout<<"stateMeanBar"<<std::endl;
-        //std::cout<<stateMeanBar<<std::endl;
         stateCov = stateCovBar;
         stateMean(2) = bearing.conBear(stateMean(2));
-        //std::cout << "stateMeannnn:\n"
-                        //<< stateMean << std::endl;
-        //std::cout << "stateCovvvvvv:\n"
-                        //<< stateCov << std::endl;
-        
 
+
+        // Store the estimated pose
         Pose estimatedPose;
         estimatedPose.x = stateMean(0);
         estimatedPose.y = stateMean(1);
         estimatedPose.theta = stateMean(2);
+        //#pragma omp critical
+        //{
         robotEstimation.poseMeans.push_back(estimatedPose);
+        //}
         
     
 
         // Calculate error between mean pose and ground truth for testing only
-        //Vector3d groundtruth;
-        //groundtruth << Robots[robot_num].x[i],
-            //Robots[robot_num].y[i],
-            //Robots[robot_num].theta[i];
+        /*Vector3d groundtruth;
+        groundtruth << Robots[robot_num].x[i],
+            Robots[robot_num].y[i],
+            Robots[robot_num].theta[i];
 
-        //Vector3d error = groundtruth - Vector3d(poseMean.x, poseMean.y, poseMean.theta);
-        //std::cout << "Error between ground truth and poseMean: " << error.transpose() << std::endl;
+        Vector3d error = groundtruth - Vector3d(poseMean.x, poseMean.y, poseMean.theta);
+        std::cout << "Error between ground truth and poseMean: " << error.transpose() << std::endl;*/
     }
 
 
