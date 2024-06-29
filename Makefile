@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -I /usr/include/eigen3
+CXXFLAGS = -std=c++17 -g -Wall -Wextra -pedantic -fopenmp -I /usr/include/eigen3
 SFML_INCLUDE = -I/usr/include/SFML/include
 
 SFML_LIBS = -L/usr/lib/x86_64-linux-gnu \
