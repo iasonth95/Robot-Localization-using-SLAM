@@ -303,7 +303,7 @@ std::cout<<"R_t"<<std::endl;
         std::vector<Pose> poseMeans = robotEstimation.poseMeans;
 
         // Draw pose and groundtruth in the visualization
-        vis.drawPoseAndGroundtruth(poseMeans, groundTruthX, groundTruthY, groundTruthTheta, i);
+        vis.drawPoseAndGroundtruth(poseMeans, groundTruthX, groundTruthY, groundTruthTheta, Landmarks, i);
 
         // Display the updated visualization
         vis.display();
