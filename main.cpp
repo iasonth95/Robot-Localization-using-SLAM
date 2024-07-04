@@ -95,7 +95,7 @@ int main()
     // Loop through all odometry and measurement samples
     // Updating the robot's pose estimate with each step
 
-    //#pragma omp parallel for num_threads(4) schedule(static, 1)// Adjust num_threads as needed
+    //#pragma omp parallel for num_threads(8) schedule(static, 1)// Adjust num_threads as needed
     for (int i = start; i < Robots[robot_num].sampled_time.size(); ++i)
     {
         double theta = stateMean(2); // Theta
@@ -279,6 +279,9 @@ std::cout<<"R_t"<<std::endl;
     std::cout << "Now we go to the latest loop for visualizing" << std::endl;
     // Initialize SFML visualization
     Visualization vis;
+
+    //vis.initializeView(robotEstimation.poseMeans, Robots[0].sampled_x, Robots[0].sampled_y, Landmarks);
+
     std::cout << "Now we go to the latest loop for visualizing" << std::endl;
 
     // Create vectors to store the ground truth values for each timestep

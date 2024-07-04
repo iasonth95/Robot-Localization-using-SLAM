@@ -21,10 +21,10 @@ Visualization::Visualization() : window_(sf::VideoMode(800, 600), "Robot Localiz
         std::cout << "Error loading car image." << std::endl;
     }
     carSprite.setTexture(carTexture);
-    carSprite.setOrigin(carTexture.getSize().x / 2, carTexture.getSize().y / 2);
+    carSprite.setOrigin(carTexture.getSize().x / 4, carTexture.getSize().y / 4);
 
     carSprite1.setTexture(carTexture1);
-    carSprite1.setOrigin(carTexture.getSize().x / 2, carTexture.getSize().y / 2);
+    carSprite1.setOrigin(carTexture.getSize().x / 4, carTexture.getSize().y / 4);
 
     if (!font.loadFromFile("arial.ttf"))
     {
@@ -81,7 +81,7 @@ void Visualization::drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
     // Adjust according to your data structure
     //std::vector<Pose> landmarks;  // Replace with actual landmark data if available
     for (const auto& landmark : Landmarks) {
-        sf::CircleShape landmarkCircle(10.f); // Adjust circle size for landmarks
+        sf::CircleShape landmarkCircle(7.f); // Adjust circle size for landmarks
         landmarkCircle.setFillColor(sf::Color(150, 150, 150)); // Gray color for landmarks
         landmarkCircle.setPosition(scaleFactorX_ * landmark.x, -scaleFactorY_ * landmark.y);
         //landmarkCircle.setRadius(5);

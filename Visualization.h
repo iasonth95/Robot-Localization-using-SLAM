@@ -22,6 +22,11 @@ public:
                                 const std::vector<Landmark_Groundtruth> &Landmarks,
                                 int currentStep);
 
+    /*void initializeView(const std::vector<Pose>& poseMeans,
+                                   const std::vector<double>& sampled_x,
+                                   const std::vector<double>& sampled_y,
+                                   const std::vector<Landmark_Groundtruth>& Landmarks);
+    */
     // Display the window
     void display();
 
