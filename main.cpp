@@ -316,7 +316,11 @@ std::cout<<"R_t"<<std::endl;
 
         // Optional delay to control frame rate
         // sf::sleep(sf::milliseconds(50));  // Adjust as needed
+        
     }
+
+    vis.calculateDivergence(robotEstimation.poseMeans, groundTruthX, groundTruthY);
+
 
     // Keep the window open until it is manually closed
     while (vis.isOpen())

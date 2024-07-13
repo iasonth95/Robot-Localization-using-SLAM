@@ -1,5 +1,6 @@
 #include "Visualization.h"
 #include <cmath>
+#include <iostream>
 // Constructor: Initialize SFML window with a size and title
 Visualization::Visualization() : window_(sf::VideoMode(800, 600), "Robot Localization Visualization") {
     
@@ -21,10 +22,10 @@ Visualization::Visualization() : window_(sf::VideoMode(800, 600), "Robot Localiz
         std::cout << "Error loading car image." << std::endl;
     }
     carSprite.setTexture(carTexture);
-    carSprite.setOrigin(carTexture.getSize().x / 4, carTexture.getSize().y / 4);
+    carSprite.setOrigin(carTexture.getSize().x / 2, carTexture.getSize().y / 2);
 
     carSprite1.setTexture(carTexture1);
-    carSprite1.setOrigin(carTexture.getSize().x / 4, carTexture.getSize().y / 4);
+    carSprite1.setOrigin(carTexture.getSize().x / 2, carTexture.getSize().y / 2);
 
     if (!font.loadFromFile("arial.ttf"))
     {
@@ -88,6 +89,28 @@ void Visualization::drawPoseAndGroundtruth(const std::vector<Pose>& poseMeans,
         window_.draw(landmarkCircle);
     }
 }
+
+
+void Visualization::calculateDivergence(const std::vector<Pose>& poseMeans,
+                                        const std::vector<double>& sampled_x,
+                                        const std::vector<double>& sampled_y) {
+    double totalError = 0.0;
+    int count = std::min(poseMeans.size(), sampled_x.size());
+
+    for (int i = 0; i < count; ++i) {
+        double dx = poseMeans[i].x - sampled_x[i];
+        double dy = poseMeans[i].y - sampled_y[i];
+        double errorInMeters = std::sqrt(dx * dx + dy * dy);
+        totalError += errorInMeters;
+
+        std::cout << "Step " << i << ": Divergence = " << errorInMeters << " meters" << std::endl;
+    }
+
+    double averageError = totalError / count;
+    std::cout << "Average Divergence: " << averageError << " meters" << std::endl;
+    std::cout << poseMeans.size() << " estimated samples " << sampled_x.size() << " ground truth samples." << std::endl;
+}
+
 
 // Display the window
 void Visualization::display() {

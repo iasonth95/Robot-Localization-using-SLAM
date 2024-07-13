@@ -27,6 +27,9 @@ public:
                                    const std::vector<double>& sampled_y,
                                    const std::vector<Landmark_Groundtruth>& Landmarks);
     */
+    void calculateDivergence(const std::vector<Pose>& poseMeans,
+                                const std::vector<double>& sampled_x,
+                                const std::vector<double>& sampled_y);
     // Display the window
     void display();
 
